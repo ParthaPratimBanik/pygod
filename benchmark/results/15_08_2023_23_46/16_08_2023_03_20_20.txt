@@ -1,0 +1,18 @@
+**************************************************
+Start Date-Time: 16/08/2023, 03:20:20
+
+Dataset: inj_cora, Model: DOMINANT
+
+Hyper-Parameter Setting:
+hid_dim=64
+dropout=0.500000
+weight=None
+weight_decay=0.000000
+lr=0.100000
+gpu=0
+
+ROC-AUC:
+AUC:    0.7407±0.0627 (0.7706)
+AP:     0.1563±0.0405 (0.1793)
+Recall: 0.2210±0.0765 (0.2754)
+**************************************************
