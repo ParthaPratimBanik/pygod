@@ -1,5 +1,6 @@
 from datetime import datetime
 import os
+import sys
 import tqdm
 import torch
 import argparse
@@ -16,12 +17,12 @@ def run_model(hid_dim, dropout, weight, weight_decay, lr, args):
                 dropout=dropout,
                 lr=lr, # it varies result a lot
                 gpu=args.gpu,
-                wight=weight)
+                weight=weight)
 
     # datetime object containing current date and time
     now = datetime.now()
     # dd/mm/YY H:M:S
-    dt_str = now.strftime("%d_%m_%Y_%H_%M_%S")
+    dt_str = now.strftime("%d%m%Y_%H%M%S")
     # print("date and time =", dt_string)
     fileName = dir_name + "/" + dt_str + ".txt"
 
@@ -108,7 +109,7 @@ def main(args):
     lr = [0.004, 0.01, 0.05, 0.10]      # lr brings change on AUC
     weight_decay = [0.0, 0.01]
     hid_dim = [8, 12, 16, 32, 48, 64, 128, 256, 512, 1024]
-    weight = [None, 0.5]
+    weight = [0.2, 0.5, 0.8]
 
     for hd in hid_dim:
         for do in dropout:
@@ -146,8 +147,9 @@ if __name__ == '__main__':
     # make result_directory
     now = datetime.now()
     # dd/mm/YY H:M:S
-    dir_name = "results\\" + now.strftime("%d_%m_%Y_%H_%M")
+    dir_name = "results\\" + now.strftime("%d%m%Y_%H%M")
     # print("date and time =", dt_string)
-    os.makedirs(dir_name)
+    if not os.path.isdir(dir_name):
+        os.makedirs(dir_name)
 
     main(args)
