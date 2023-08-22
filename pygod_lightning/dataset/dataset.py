@@ -74,7 +74,8 @@ from torch_geometric.loader import NeighborLoader
 
 
 class DataSet(pl.LightningDataModule):
-    def __init__(self, name: str = "inj_cora", cache_dir: str = None, batch_size: int = 0,
+    def __init__(self, name: str = "inj_cora", model_name: str = "dominant", 
+                 cache_dir: str = None, batch_size: int = 0,
                  num_layers: int = 4, num_neigh: int = -1):
         super().__init__()
         self.cache_dir = cache_dir
@@ -83,19 +84,28 @@ class DataSet(pl.LightningDataModule):
             self.cache_dir = os.path.join(os.path.expanduser('~'), '.pygod/data')
         self.file_path = os.path.join(self.cache_dir, self.name+'.pt')
         self.zip_path = os.path.join(self.cache_dir, self.name+'.pt.zip')
+        
         self.batch_size = batch_size
         self.num_layers = num_layers
         self.num_neigh = num_neigh
-        if type(num_neigh) is int:
-            self.num_neigh = [num_neigh] * self.num_layers
-        elif type(num_neigh) is list:
-            if len(num_neigh) != self.num_layers:
-                raise ValueError('Number of neighbors should have the '
-                                 'same length as hidden layers dimension or'
-                                 'the number of layers.')
-            self.num_neigh = num_neigh
+        
+        self.model_name = model_name
+        ## Following if-elif block used in adone, AnomalyDAE, conad, dominant, done, /
+        ## gaan, gae, guide models (python file)
+        if self.model_name == "anomalous" or self.model_name == "radar" \
+            or self.model_name == "scan":
+            pass
         else:
-            raise ValueError('Number of neighbors must be int or list of int')
+            if type(num_neigh) is int:
+                self.num_neigh = [num_neigh] * self.num_layers
+            elif type(num_neigh) is list:
+                if len(num_neigh) != self.num_layers:
+                    raise ValueError('Number of neighbors should have the '
+                                    'same length as hidden layers dimension or'
+                                    'the number of layers.')
+                self.num_neigh = num_neigh
+            else:
+                raise ValueError('Number of neighbors must be int or list of int')
         self.data = None
         # self.db = None
 
@@ -120,13 +130,31 @@ class DataSet(pl.LightningDataModule):
         '''loading dataset from local path
         '''
         data = torch.load(self.file_path)
-        data.s = to_dense_adj(data.edge_index)[0] # process_graph
+
+        ## Following if-elif block used in adone, AnomalyDAE, cola, conad,
+        # dominant, done, gaan, gae, ocgnn models (python file)
+        if self.model_name == "scan":
+            pass
+        else:
+            data.s = to_dense_adj(data.edge_index)[0] # process_graph
+
+        ## Different process graph on guide, anomalous, radar model
+        ##........
+        
         self.data = data
         # self.db = DatasetBase(file_path=self.file_path)
         
     def train_dataloader(self):
         if self.batch_size == 0:
             self.batch_size = self.data.x.shape[0]
+        
+        ## Following if-elif block used in adone, AnomalyDAE, cola, conad, dominant, done, /
+        ## gaan gae, guide, ocgnn models (python file)
+        ## "anomalous", "radar" uses only data.x in forward()
+        ## "scan" uses data.num_nodes
+        if self.model_name == "anomalous" or self.model_name == "radar" \
+            or self.model_name == "scan":
+            return NeighborLoader(self.data, batch_size=self.batch_size)
         return NeighborLoader(self.data, self.num_neigh, batch_size=self.batch_size)
 
     # def val_dataloader(self):
